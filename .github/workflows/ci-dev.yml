@@ -3,7 +3,7 @@ name: Backend CI - Feature to Dev
 on:
   pull_request:
     branches:
-      - dev
+      - develop
     types:
       - opened
       - synchronize
@@ -23,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [ 24 ]
+        node-version: [ 20 ]
 
     steps:
       ##################################################
@@ -88,10 +88,10 @@ jobs:
       ##################################################
       # Checkout target branch
       ##################################################
-      - name: Checkout dev branch
+      - name: Checkout develop branch
         uses: actions/checkout@v4
         with:
-          ref: dev
+          ref: develop
           fetch-depth: 0
 
       ##################################################
@@ -112,7 +112,7 @@ jobs:
       # Push changes
       ##################################################
       - name: Push changes
-        run: git push origin dev
+        run: git push origin develop
         ##################################################
         # Delete merged feature branch
         ##################################################
