@@ -2,12 +2,17 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
+import userRoutes from '../routes/user.routes'
+
 dotenv.config();
 
 class Server {
 
   private app: express.Application;
   private port: string | number;
+  private apiPaths = {
+    users: '/api/users'
+  }
 
 
   constructor() {
@@ -15,12 +20,14 @@ class Server {
     this.port = process.env.PORT || 3000;
 
 
-
     //middleware
+    this.middleware();
 
     //routes
+    this.routes();
 
   }
+
   //connection DB
 
   middleware() {
@@ -29,6 +36,10 @@ class Server {
     this.app.use(express.static('public'))
   }
 
+
+  routes(){
+    this.app.use( this.apiPaths.users, userRoutes )
+  }
 
   listen() {
     this.app.listen(this.port, () => {
