@@ -1,0 +1,122 @@
+name: Backend CI - Feature to Dev
+
+on:
+  pull_request:
+    branches:
+      - dev
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-feature:
+    name: Validate feature branch
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    strategy:
+      matrix:
+        node-version: [ 20 ]
+
+    steps:
+      ##################################################
+      # Checkout code
+      ##################################################
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      ##################################################
+      # Setup Node
+      ##################################################
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      ##################################################
+      # Install dependencies
+      ##################################################
+      - name: Install dependencies
+        run: npm ci
+
+      ##################################################
+      # Lint
+      ##################################################
+      - name: Run lint
+        run: npm run lint
+
+      ##################################################
+      # Unit tests
+      ##################################################
+      - name: Run tests
+        run: npm test
+
+      ##################################################
+      # Coverage
+      ##################################################
+      - name: Generate coverage
+        run: npm run coverage
+
+      ##################################################
+      # Build
+      ##################################################
+      - name: Build project
+        run: npm run build
+
+  auto-merge-to-dev:
+    name: Auto merge PR to dev
+    runs-on: ubuntu-latest
+    needs: validate-feature
+
+    if: ${{ success() }}
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      ##################################################
+      # Checkout target branch
+      ##################################################
+      - name: Checkout dev branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      ##################################################
+      # Merge feature into dev
+      ##################################################
+      - name: Merge feature branch into dev
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git fetch origin ${{ github.event.pull_request.head.ref }}
+
+          git merge --no-ff \
+            origin/${{ github.event.pull_request.head.ref }} \
+            -m "Auto merge PR #${{ github.event.pull_request.number }}"
+
+      ##################################################
+      # Push changes
+      ##################################################
+      - name: Push changes
+        run: git push origin dev
+        ##################################################
+        # Delete merged feature branch
+        ##################################################
+      - name: Delete feature branch
+        if: startsWith(github.head_ref, 'feature/')
+        run: |
+          git push origin --delete ${{ github.event.pull_request.head.ref }}
