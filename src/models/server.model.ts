@@ -41,6 +41,10 @@ class Server {
     this.app.use( this.apiPaths.users, userRoutes )
   }
 
+  getApp() {
+    return this.app;
+  }
+
   listen() {
     this.app.listen(this.port, () => {
       console.log('🚀- Server running on port', this.port);
