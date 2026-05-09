@@ -18,12 +18,26 @@ describe("User API QA test suite", () => {
 
   describe("GET /api/users", () => {
     test("returns default pagination values (baseline regression)", async () => {
+      // Mock 5 users
+      const mockUsers = [
+        { _id: "1", name: "User 1", email: "user1@example.com" },
+        { _id: "2", name: "User 2", email: "user2@example.com" },
+        { _id: "3", name: "User 3", email: "user3@example.com" },
+        { _id: "4", name: "User 4", email: "user4@example.com" },
+        { _id: "5", name: "User 5", email: "user5@example.com" }
+      ];
+
+      (User.find as unknown as jest.Mock).mockReturnValue({
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockUsers)
+      });
+
       const response = await request(app).get("/api/users");
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({
+      expect(response.body).toMatchObject({
         ok: true,
-        msg: "Get all users - from controller",
+        total: 5,
         limit: "10",
         page: "1",
         from: "1",
@@ -32,6 +46,17 @@ describe("User API QA test suite", () => {
     });
 
     test("returns custom pagination values from query params (equivalence partition)", async () => {
+      // Mock 2 users for custom pagination
+      const mockUsers = [
+        { _id: "26", name: "User 26", email: "user26@example.com" },
+        { _id: "27", name: "User 27", email: "user27@example.com" }
+      ];
+
+      (User.find as unknown as jest.Mock).mockReturnValue({
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockUsers)
+      });
+
       const response = await request(app)
         .get("/api/users")
         .query({ limit: "25", page: "2", from: "26", to: "50" });
@@ -39,6 +64,7 @@ describe("User API QA test suite", () => {
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         ok: true,
+        total: 2,
         limit: "25",
         page: "2",
         from: "26",
@@ -54,17 +80,23 @@ describe("User API QA test suite", () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         ok: true,
-        msg: "Get user",
+        "msg": "Get user",
         id: "abc123"
       });
     });
 
-    test("returns 404 for missing route param id (error handling)", async () => {
-      const response = await request(app).get("/api/users/");
+    test("returns all users when no id is provided", async () => {
+      const mockUsers: never[] = [];
+      (User.find as unknown as jest.Mock).mockReturnValue({
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockUsers)
+      });
+
+      const response = await request(app).get("/api/users");
 
       expect(response.status).toBe(200);
       expect(response.body.ok).toBe(true);
-      expect(response.body.msg).toBe("Get all users - from controller");
+      expect(Array.isArray(response.body.users)).toBe(true);
     });
   });
 
@@ -182,15 +214,15 @@ describe("User API QA test suite", () => {
     test("BUSINESS LOGIC: creates user successfully with valid data (happy path)", async () => {
       const payload = {
         name: "Joaquin Hernandez",
-        email: `test${Date.now()}@example.com`,
-        password: "securePassword123"
+        email: `test${Date.now()}@gmail.com`,
+        password: "SecurePassABC123!"
       };
 
       const hashedPassword = "hashedSecurePassword123WithSalt";
 
-      // Mock bcrypt.genSalt and bcrypt.hash
+      // Mock bcrypt.genSalt and bcrypt.hashSync
       (bcrypt.genSalt as unknown as jest.Mock).mockResolvedValue("salt10");
-      (bcrypt.hash as unknown as jest.Mock).mockResolvedValue(hashedPassword);
+      (bcrypt.hashSync as unknown as jest.Mock).mockReturnValue(hashedPassword);
 
       // Mock User.findOne to return null (email doesn't exist)
       (User.findOne as unknown as jest.Mock).mockResolvedValue(null);
@@ -224,15 +256,15 @@ describe("User API QA test suite", () => {
 
       // Verify mocks were called
       expect(bcrypt.genSalt).toHaveBeenCalledWith(10);
-      expect(bcrypt.hash).toHaveBeenCalledWith(payload.password, "salt10");
+      expect(bcrypt.hashSync).toHaveBeenCalledWith("SecurePassABC123!", "salt10");
       expect(User.findOne).toHaveBeenCalledWith({ email: payload.email });
     });
 
     test("BUSINESS LOGIC: rejects duplicate email addresses (data integrity)", async () => {
       const payload = {
         name: "Joaquin",
-        email: "existing@example.com",
-        password: "securePassword123"
+        email: "existing@gmail.com",
+        password: "QWEasd135*"
       };
 
       // Mock User.findOne to return existing user
@@ -334,8 +366,8 @@ describe("User API QA test suite", () => {
     test("CONSISTENCY: response structure is always consistent on success", async () => {
       const payload = {
         name: "Valid User",
-        email: `consistency${Date.now()}@example.com`,
-        password: "ValidPassword123"
+        email: `consistency${Date.now()}@gmail.com`,
+        password: "QWEasd135*"
       };
 
       (bcrypt.genSalt as unknown as jest.Mock).mockResolvedValue("salt10");
