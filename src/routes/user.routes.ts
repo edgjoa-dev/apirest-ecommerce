@@ -5,13 +5,12 @@ import { fieldsValidator } from "../middlewares";
 
 const route = Router();
 
-
 route.get('/', getAllUsers);
 
 route.get('/:id', getUser);
 
-route.post('/',[
-    check('name', 'El nombre es requerido y debe ser mayor a 3 caracteres').isLength({ min: 3 }).trim().toLowerCase(),
+route.post('/',[ 
+    check('name', 'El nombre es requerido y debe ser mayor a 3 caracteres').isLength({ min: 3 }).trim(),
     check('email', 'Email es requerido, por favor válidar nuevamente').isEmail().trim().toLowerCase(),
     check('password', 'Password es requerido y debe ser al menos 10 caracteres').isLength({ min: 10 }).trim(),
     fieldsValidator
