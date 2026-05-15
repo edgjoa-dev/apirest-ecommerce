@@ -106,7 +106,8 @@ describe("User API QA test suite", () => {
       const response = await request(app).post("/api/users").send({
         name: "Jo",
         email: "test@example.com",
-        password: "secret12312"
+        password: "secret12312",
+        role: "USER_ROLE"
       });
 
       expect(response.status).toBe(400);
@@ -119,7 +120,8 @@ describe("User API QA test suite", () => {
       const response = await request(app).post("/api/users").send({
         name: "Joaquin",
         email: "test@example.com",
-        password: "short123"
+        password: "short123",
+        role: "USER_ROLE"
       });
 
       expect(response.status).toBe(400);
