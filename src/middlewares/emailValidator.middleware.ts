@@ -11,7 +11,7 @@ export const validateGoogleEmail = (email: string): { isValid: boolean; message?
     }
 
     if (!isGoogleEmail(email)) {
-        return { isValid: false, message: 'Only Google emails (gmail.com or googlemail.com) are allowed' };
+        return { isValid: false, message: 'Only Google emails (gmail.com or google.com) are allowed' };
     }
 
     return { isValid: true };

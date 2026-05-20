@@ -279,7 +279,9 @@ describe("User API QA test suite", () => {
 
       expect(response.status).toBe(400);
       expect(response.body.ok).toBe(false);
-      expect(response.body.msg).toContain("Email already exists");
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors.email).toBeDefined();
+      expect(response.body.errors.email.msg).toContain(`The email ${ payload.email } already exists`);
     });
 
     // Principle 6: Absence of Errors Fallacy - Test edge cases

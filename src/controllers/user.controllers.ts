@@ -81,16 +81,6 @@ export const createUser = async (req: Request, res: Response) => {
             });
         }
 
-        // validar que email no exista
-        const emailExists = await User.findOne({ email });
-
-        if (emailExists) {
-            return res.status(400).json({
-                ok: false,
-                msg: 'Email already exists'
-            })
-        }
-
         //validar datos recibidos sean name, email y password
         if (!name.trim().toLowerCase() || !email.trim().toLowerCase() || !password.trim()) {
             return res.status(400).json({
@@ -109,7 +99,7 @@ export const createUser = async (req: Request, res: Response) => {
         await user.save();
 
 
-        //retornar rspuesta con usuario creado
+        //retornar respuesta con usuario creado
         return res.status(200).json({
             ok: true,
             user
